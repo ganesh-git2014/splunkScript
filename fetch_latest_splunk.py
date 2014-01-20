@@ -74,7 +74,7 @@ def get_package_names():
     platform = sys.platform
 
     if "linux" in platform:
-        return ["Linux-x86_64"]
+        return ["Linux-x86_64.tgz"]
     elif "darwin" in platform:
         return ["darwin-64.tgz", "Darwin-universal.tgz"]
     else:
