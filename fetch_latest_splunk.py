@@ -113,7 +113,8 @@ def parse_options():
                       help="url to the splunk package")
     parser.add_option("-f", "--from", dest="host",
                       help="the host that you want to fetch from, "
-                           "ex. http://releases.splunk.com")
+                           "ex. http://releases.splunk.com",
+                      default='http://releases.splunk.com')
     (options, args) = parser.parse_args()
     return options
 
@@ -159,7 +160,7 @@ def main():
                 continue
             else:
                 # run dluntar
-                dluntar(url=pkg_url, tar_dir=pkg_dir, run_dir=splunk_dir,
+                    dluntar(url=pkg_url, tar_dir=pkg_dir, run_dir=splunk_dir,
                         package_name=p)
                 break
 
