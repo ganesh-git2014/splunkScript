@@ -160,7 +160,7 @@ def main():
                 continue
             else:
                 # run dluntar
-                    dluntar(url=pkg_url, tar_dir=pkg_dir, run_dir=splunk_dir,
+                dluntar(url=pkg_url, tar_dir=pkg_dir, run_dir=splunk_dir,
                         package_name=p)
                 break
 
