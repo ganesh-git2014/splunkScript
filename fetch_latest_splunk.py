@@ -81,20 +81,39 @@ def get_package_names():
         print "Did not implement for this platform: {p}".format(p=platform)
         exit(1)
 
+def get_host():
+    """
+    get the fetcher hostname
+    """
+    hosts = ["http://172.18.90.140", 'http://releases.splunk.com']
+    for h in hosts:
+        if 200 == urllib.urlopen(h).getcode():
+            return h
+    print "None of the hosts are available: {h}".format(h=str(hosts))
+    print "Existing..."
+    exit(1)
+
 def parse_options():
     """
     parse options
     """
     parser = OptionParser()
     parser.add_option("-b", "--branch", dest="branch", help="brach to fetch")
-    parser.add_option("-c", "--p4change", dest="cl", help="change list number to fetch")
+    parser.add_option("-c", "--p4change", dest="cl",
+                      help="change list number to fetch")
     parser.add_option("-p", "--pkg-dir", dest="pkg_dir",
-                      default="/Users/clin/branches_tar",
-                      help="directory for saving the pkg, will mkdir if it does not exist")
+                      default=os.path.expanduser("~") + "/branches_tar",
+                      help="directory for saving the pkg, "
+                           "will mkdir if it does not exist")
     parser.add_option("-s", "--splunk-dir", dest="splunk_dir",
-                      default="/Users/clin/splunk_run",
-                      help="directory for untaring splunk, will mkdir if it does not exist")
-    parser.add_option("-u", "--url", dest="url", help="url to the splunk package")
+                      default=os.path.expanduser("~") + "/splunk_run",
+                      help="directory for untaring splunk,"
+                           "will mkdir if it does not exist")
+    parser.add_option("-u", "--url", dest="url",
+                      help="url to the splunk package")
+    parser.add_option("-f", "--from", dest="host",
+                      help="the host that you want to fetch from, "
+                           "ex. http://releases.splunk.com")
     (options, args) = parser.parse_args()
     return options
 
@@ -105,6 +124,7 @@ def main():
     pkg_dir = options.pkg_dir
     splunk_dir = options.splunk_dir
     url = options.url
+    host = options.host
 
     # check if pkg_dir and splunk_dir exist. if not, create them
     if not os.path.exists(pkg_dir):
@@ -121,8 +141,9 @@ def main():
             exit(1)
 
         # getting the pkg url
-        url_template = ("http://releases.splunk.com/cgi-bin/splunk_build_fetcher.py"
-                        "?PLAT_PKG={p}&DELIVER_AS=url&BRANCH={b}")
+        host = host if host is not None else get_host()
+        url_template = (host + "/cgi-bin/splunk_build_fetcher.py?"
+                        "PLAT_PKG={p}&DELIVER_AS=url&BRANCH={b}")
         if cl is not None:
             print "Getting splunk on branch '{b}' @ {cl}".format(b=branch, cl=cl)
             url_template = url_template + "&P4CHANGE={c}".format(c=cl)
