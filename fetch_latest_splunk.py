@@ -3,6 +3,7 @@ from optparse import OptionParser
 import os
 import subprocess
 from datetime import datetime
+import sys
 
 def print_time_spent(time, pkg):
     """
@@ -12,7 +13,7 @@ def print_time_spent(time, pkg):
     speed = (os.path.getsize(pkg) / 1024) / time
     print "Average speed: {s} kilobytes per second".format(s=speed)
 
-def dluntar(url, tar_dir, run_dir):
+def dluntar(url, tar_dir, run_dir, package_name):
     """
     Dowload and then untar splunk package, calculate time spent also
     """
@@ -20,9 +21,8 @@ def dluntar(url, tar_dir, run_dir):
     RUN_DIR = run_dir #"/Users/clin/splunk_run"
     # download the tgz file
     # find the brach name and build number
-
     branch = url.split("/")[4].replace("_builds", "")
-    build = url.split("/")[-1].replace("splunk-", "").replace("-Darwin-universal.tgz","").replace("-darwin-64.tgz", "")
+    build = url.split("/")[-1].replace("splunk-", "").replace("-" + package_name, "")
     file_name = url.split("/")[-1]
 
     path = os.path.join(TAR_DIR, branch)
@@ -66,6 +66,20 @@ def dluntar(url, tar_dir, run_dir):
                              stderr=subprocess.PIPE)
         p.wait()
         print os.path.join(untar_path, "splunk", "bin")
+
+def get_package_names():
+    """
+    get the package name by system's platform
+    """
+    platform = sys.platform
+
+    if "linux" in platform:
+        return ["Linux-x86_64"]
+    elif "darwin" in platform:
+        return ["darwin-64.tgz", "Darwin-universal.tgz"]
+    else:
+        print "Did not implement for this platform: {p}".format(p=platform)
+        exit(1)
 
 def parse_options():
     """
@@ -116,7 +130,7 @@ def main():
             print "Getting the latest splunk pkg on branch '{b}'".format(b=branch)
 
         # get url of latest package
-        for p in ["darwin-64.tgz", "Darwin-universal.tgz"]:
+        for p in get_package_names():
             f = urllib.urlopen(url_template.format(b=branch, p=p))
             pkg_url = f.readline().strip()
 
@@ -124,7 +138,8 @@ def main():
                 continue
             else:
                 # run dluntar
-                dluntar(url=pkg_url, tar_dir=pkg_dir, run_dir=splunk_dir)
+                dluntar(url=pkg_url, tar_dir=pkg_dir, run_dir=splunk_dir,
+                        package_name=p)
                 break
 
         if "Error" in pkg_url:
