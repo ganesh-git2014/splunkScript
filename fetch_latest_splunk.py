@@ -10,10 +10,11 @@ def print_time_spent(time, pkg):
     print how much time spent and the avg internet speed
     """
     print "Finished downloading, it took {t} seconds".format(t=time)
-    speed = (os.path.getsize(pkg) / 1024) / time
-    print "Average speed: {s} kilobytes per second".format(s=speed)
+    if time > 0:
+        speed = (os.path.getsize(pkg) / 1024) / time
+        print "Average speed: {s} kilobytes per second".format(s=speed)
 
-def dluntar(url, tar_dir, run_dir, package_name):
+def dluntar(url, tar_dir, run_dir, package_name, branch=None):
     """
     Dowload and then untar splunk package, calculate time spent also
     """
@@ -21,8 +22,10 @@ def dluntar(url, tar_dir, run_dir, package_name):
     RUN_DIR = run_dir #"/Users/clin/splunk_run"
     # download the tgz file
     # find the brach name and build number
-    branch = url.split("/")[4].replace("_builds", "")
-    build = url.split("/")[-1].replace("splunk-", "").replace("-" + package_name, "")
+    branch = (url.split("/")[4].replace("_builds", "") if branch is None
+              else branch)
+    build = (url.split("/")[-1].replace("splunk-", "")
+             .replace("-" + package_name, ""))
     file_name = url.split("/")[-1]
 
     path = os.path.join(TAR_DIR, branch)
@@ -85,7 +88,7 @@ def get_host():
     """
     get the fetcher hostname
     """
-    hosts = ["http://172.18.90.140", 'http://releases.splunk.com']
+    hosts = ["http://172.18.90.221", 'http://releases.splunk.com']
     for h in hosts:
         if 200 == urllib.urlopen(h).getcode():
             return h
@@ -114,7 +117,7 @@ def parse_options():
     parser.add_option("-f", "--from", dest="host",
                       help="the host that you want to fetch from, "
                            "ex. http://releases.splunk.com",
-                      default='http://releases.splunk.com')
+                      default='http://172.18.90.221')
     (options, args) = parser.parse_args()
     return options
 
@@ -159,9 +162,10 @@ def main():
             if "Error" in pkg_url:
                 continue
             else:
+                print pkg_url
                 # run dluntar
                 dluntar(url=pkg_url, tar_dir=pkg_dir, run_dir=splunk_dir,
-                        package_name=p)
+                        package_name=p, branch=branch)
                 break
 
         if "Error" in pkg_url:
