@@ -84,17 +84,21 @@ def get_package_names():
         print "Did not implement for this platform: {p}".format(p=platform)
         exit(1)
 
-def get_host():
+def get_host(host):
     """
     get the fetcher hostname
     """
-    hosts = ["http://172.18.90.221", 'http://releases.splunk.com']
-    for h in hosts:
-        if 200 == urllib.urlopen(h).getcode():
-            return h
-    print "None of the hosts are available: {h}".format(h=str(hosts))
-    print "Existing..."
-    exit(1)
+    if not host in ["TW", "SF"]:
+        print "Wrong -f argument, please use TW or SF"
+    hosts = {"TW": "http://172.18.90.221",
+             "SF": 'http://releases.splunk.com'}
+
+    if 200 == urllib.urlopen(hosts[host]).getcode():
+        return hosts[host]
+    else:
+        print "The host {h} is not available".format(h=host)
+        print "Existing..."
+        exit(1)
 
 def parse_options():
     """
@@ -115,9 +119,8 @@ def parse_options():
     parser.add_option("-u", "--url", dest="url",
                       help="url to the splunk package")
     parser.add_option("-f", "--from", dest="host",
-                      help="the host that you want to fetch from, "
-                           "ex. http://releases.splunk.com",
-                      default='http://172.18.90.221')
+                      help="whre you want to fetch from: TW or SF",
+                      default='TW')
     (options, args) = parser.parse_args()
     return options
 
@@ -145,7 +148,7 @@ def main():
             exit(1)
 
         # getting the pkg url
-        host = host if host is not None else get_host()
+        host = get_host(host)
         url_template = (host + "/cgi-bin/splunk_build_fetcher.py?"
                         "PLAT_PKG={p}&DELIVER_AS=url&BRANCH={b}")
         if cl is not None:
