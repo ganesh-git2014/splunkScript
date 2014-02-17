@@ -31,7 +31,7 @@ def pick_build(branch, latest):
 
     try:
         builds = os.listdir(branch_path)
-
+        builds.sort()
         if not latest:
             print "Pick a build"
             count = 0
