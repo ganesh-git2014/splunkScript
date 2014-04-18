@@ -5,6 +5,9 @@ import subprocess
 from datetime import datetime
 import sys
 
+DEFAULT_PKG_DIR = os.path.join(os.path.expanduser("~"), "branches_tar")
+DEFAULT_SPLUNK_DIR = os.path.join(os.path.expanduser("~"), "splunk_run")
+
 def print_time_spent(time, pkg):
     """
     print how much time spent and the avg internet speed
@@ -109,11 +112,11 @@ def parse_options():
     parser.add_option("-c", "--p4change", dest="cl",
                       help="change list number to fetch")
     parser.add_option("-p", "--pkg-dir", dest="pkg_dir",
-                      default=os.path.expanduser("~") + "/branches_tar",
+                      default=,
                       help="directory for saving the pkg, "
                            "will mkdir if it does not exist")
     parser.add_option("-s", "--splunk-dir", dest="splunk_dir",
-                      default=os.path.expanduser("~") + "/splunk_run",
+                      default=,
                       help="directory for untaring splunk,"
                            "will mkdir if it does not exist")
     parser.add_option("-u", "--url", dest="url",
