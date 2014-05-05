@@ -3,8 +3,12 @@ import sys
 import subprocess
 import os
 from optparse import OptionParser
+import time
 
 P4_DIR = os.path.join(os.path.expanduser("~"), "Documents", "p4depot", "splunk")
+GREEN_COLOR = '\033[92m'
+RED_COLOR = '\033[91m'
+COLOR_END = '\033[0m'
 
 def get_fail_tests(url):
     """
@@ -46,6 +50,8 @@ def parse_options():
     parser.add_option("-p", "--p4-dir", dest="p4_dir",
                       help="your p4 directory, it should ends with 'splunk'",
                       default=P4_DIR)
+    parser.add_option("-o", "--test-option", dest="test_option",
+                      help="other test options to specify")
     (options, args) = parser.parse_args()
     return options
 
@@ -70,6 +76,7 @@ def main():
     splunk_home = options.splunk_home
     test_dir = os.path.join(options.p4_dir, "branches", options.branch,
                             "new_test")
+    test_option = options.test_option
     check_test_dir(test_dir)
 
     # get tests to run
@@ -85,29 +92,47 @@ def main():
 
     print "Found {n} failed tests".format(n=len(keywords))
 
-    # run tests
-    result_file = open("run_fail_tests.log", "w")  # for logging the result
-    for keyword in keywords:
-        cmd = ("cd {t}; source setTestEnv {s}; cd tests/web/webdriver; pwd; "
-               "{s}/bin/splunk cmd python {t}/bin/pytest/pytest.py -k '{k}'"
-               .format(t=test_dir, s=splunk_home, k=keyword))
-        p = subprocess.Popen(cmd, env=os.environ, shell=True,
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p.wait()
+    try:
+        # run tests
+        result_file = open("run_fail_tests.log", "w")  # for logging the result
+        for keyword in keywords[:1]:
+            cmd = ("cd {t}; source setTestEnv {s}; cd tests/web/webdriver;"
+                   "{s}/bin/splunk cmd python {t}/bin/pytest/pytest.py -k '{k}'"
+                   " {o}"
+                   .format(t=test_dir, s=splunk_home, k=keyword, o=test_option))
+            p = subprocess.Popen(cmd, env=os.environ, shell=True,
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            timeout = 5 * 60
+            while timeout > 0:
+                timeout -= 1
+                if p.poll is None:
+                    time.sleep(1)
+                else:
+                    break
 
-        result_line = p.stdout.readlines()[8]
-        if result_line.endswith("PASSED\n"):
-            print "{k}: PASSED".format(k=keyword)
+            if timeout == 0:
+                print RED_COLOR + "{k}: TIMEOUT".format(k=keyword) + COLOR_END
+            else:
+                lines = p.stdout.readlines()
+                result_line = lines[7]
+                if result_line.endswith("PASSED\n"):
+                    print (GREEN_COLOR + "{k}: PASSED".format(k=keyword) +
+                           COLOR_END)
+                elif result_line.endswith("FAILED\n"):
+                    result_file.write(keyword + "\n")
+                    print (RED_COLOR + "{k}: FAILED".format(k=keyword) +
+                           COLOR_END)
+                else:
+                    result_file.write(keyword + "\n")
+                    print (RED_COLOR + "{k}: ERROR".format(k=keyword) +
+                           COLOR_END)
+        result_file.close()
 
-        elif result_line.endswith("FAILED\n"):
-            result_file.write(keyword + "\n")
-            print "{k}: FAILED".format(k=keyword)
-
-        else:
-            result_file.write(keyword + "\n")
-            print "{k}: ERROR".format(k=keyword)
-    result_file.close()
+    except IndexError, err:
+        print lines
+        print p.stderr.readlines()
+        print err
 
 if __name__ == '__main__':
     main()

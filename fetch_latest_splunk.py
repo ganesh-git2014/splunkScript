@@ -112,11 +112,11 @@ def parse_options():
     parser.add_option("-c", "--p4change", dest="cl",
                       help="change list number to fetch")
     parser.add_option("-p", "--pkg-dir", dest="pkg_dir",
-                      default=,
+                      default=DEFAULT_PKG_DIR,
                       help="directory for saving the pkg, "
                            "will mkdir if it does not exist")
     parser.add_option("-s", "--splunk-dir", dest="splunk_dir",
-                      default=,
+                      default=DEFAULT_SPLUNK_DIR,
                       help="directory for untaring splunk,"
                            "will mkdir if it does not exist")
     parser.add_option("-u", "--url", dest="url",
