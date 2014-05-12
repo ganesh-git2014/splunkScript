@@ -13,7 +13,11 @@ cd $testdir
 splunks=(`findsplunk`)
 total=${#splunks[@]}
 if [ 1 == $total ]; then
-	source setTestEnv ${splunks[0]}
+	if [ 'bubbles' == "$1" ]; then
+		source setTestEnv ${splunks[0]}
+	else
+		source setTestEnv -s ${splunks[0]}
+	fi
 else
 	echo "Which splunk do you want to run test?"
 	for (( i=0; i<=$(( $total -1 )); i++ ))
@@ -21,7 +25,12 @@ else
 		echo "$i) ${splunks[$i]}"
 	done
 	read index
-	source setTestEnv "${splunks[$index]}"
+
+	if [ 'bubbles' == "$1" ]; then
+		source setTestEnv "${splunks[$index]}"
+	else
+		source setTestEnv -s "${splunks[$index]}"
+	fi
 fi
 
 alias cdt="cd $testdir/tests/web/webdriver"
