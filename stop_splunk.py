@@ -1,11 +1,13 @@
 import os
 import subprocess
 import sys
-
+from threading import Thread
 
 def stop_splunk(splunk_home):
     """
     """
+    print "Stopping {s}".format(s=splunk_home)
+
     cmd = "{spl}/bin/splunk stop".format(spl=splunk_home)
 
     p = subprocess.Popen(cmd, env=os.environ, shell=True,
@@ -16,7 +18,7 @@ def stop_splunk(splunk_home):
 
 p = subprocess.Popen("ps aux | grep splunk", env=os.environ, shell=True,
                      stdin=subprocess.PIPE,
-                     stdout=subprocess.PIPE, stderr=    subprocess.PIPE)
+                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 p.wait()
 target = "python -O"
 splunks = [ p[p.find(target) + len(target): p.find("/lib")]
@@ -25,8 +27,8 @@ splunks = [ p[p.find(target) + len(target): p.find("/lib")]
 if "-all" in sys.argv:
     print "Stopping all splunk"
     for spl in splunks:
-        print "Stopping {s}".format(s=spl)
-        stop_splunk(spl)
+        t = Thread(target=stop_splunk, args=(spl,))
+        t.start()
 else:
     if 1 == len(splunks):
         index = 0
