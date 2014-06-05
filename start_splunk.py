@@ -3,11 +3,11 @@ import subprocess
 import sys
 from optparse import OptionParser
 
-splunk_directory = os.path.expanduser("~/splunk_run")
+SPLUNK_DIR = os.path.expanduser("~/splunk_run")
 ITEM_PER_ROW = 3
 
 
-def pick_branch():
+def pick_branch(splunk_directory):
     branches = os.listdir(splunk_directory)
 
     print "Pick a branch:"
@@ -26,7 +26,7 @@ def pick_branch():
         exit(1)
 
 
-def pick_build(branch, latest):
+def pick_build(splunk_directory, branch, latest):
     branch_path = os.path.join(splunk_directory, branch)
 
     try:
@@ -75,14 +75,19 @@ def parse_options():
     parser.add_option("-b", "--branch", dest="branch", help="brach to fetch")
     parser.add_option("-l", "--latest", dest="latest", action="store_true",
                       help="add this option to start the latest build of the branch")
+    parser.add_option("-s", "--splunk-dir", dest="splunk_dir",
+                      default=SPLUNK_DIR,
+                      help="directory for untaring splunk,"
+                           "will mkdir if it does not exist")
     (options, args) = parser.parse_args()
     return options
 
 def main():
     options = parse_options()
-    branch = pick_branch() if options.branch is None else options.branch
-    build = pick_build(branch, options.latest)
-    splunk_home = os.path.join(splunk_directory, branch, build, "splunk")
+    branch = (pick_branch(options.splunk_dir) if options.branch is None
+              else options.branch)
+    build = pick_build(options.splunk_dir, branch, options.latest)
+    splunk_home = os.path.join(options.splunk_dir, branch, build, "splunk")
 
     startsplunk(splunk_home)
 
