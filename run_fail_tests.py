@@ -37,7 +37,14 @@ def parse_options():
     """
     parse options
     """
-    parser = OptionParser()
+    url_example = "http://bamboo.splunk.com/browse/B604-UIWDMISCOSXFF-10/test"
+    usage = """
+               python %prog -b bubbles -s $SPLUNK_HOME -p P4_DIR -u {u}
+               To run the fail test again, do -f run_fail_tests.log without the
+               -u option
+            """.format(u=url_example)
+
+    parser = OptionParser(usage=usage)
     parser.add_option("-b", "--branch", dest="branch", help="brach to test",
                       default="bubbles")
     parser.add_option("-s", "--splunk-home", dest="splunk_home",
@@ -76,7 +83,8 @@ def main():
     splunk_home = options.splunk_home
     test_dir = os.path.join(options.p4_dir, "branches", options.branch,
                             "new_test")
-    test_option = options.test_option
+    test_option = (options.test_option if options.test_option is not None
+                   else "")
     check_test_dir(test_dir)
 
     # get tests to run
@@ -93,13 +101,18 @@ def main():
     print "Found {n} failed tests".format(n=len(keywords))
 
     try:
+        source_cmd = ("source setTestEnv" if "bubbles" == options.branch
+                      else "source setTestEnv -s")
         # run tests
         result_file = open("run_fail_tests.log", "w")  # for logging the result
-        for keyword in keywords[:1]:
-            cmd = ("cd {t}; source setTestEnv {s}; cd tests/web/webdriver;"
+        for keyword in keywords:
+
+            cmd = ("cd {t}; {s_cmd} {s}; cd tests/web/webdriver;"
                    "{s}/bin/splunk cmd python {t}/bin/pytest/pytest.py -k '{k}'"
-                   " {o}"
-                   .format(t=test_dir, s=splunk_home, k=keyword, o=test_option))
+                   " {o}".format(t=test_dir, s=splunk_home, k=keyword,
+                                 o=test_option, s_cmd=source_cmd))
+            # print cmd
+            # exit
             p = subprocess.Popen(cmd, env=os.environ, shell=True,
                                  stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
