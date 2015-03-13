@@ -29,9 +29,12 @@ def pick_branch(splunk_directory):
 def pick_build(splunk_directory, branch, latest):
     branch_path = os.path.join(splunk_directory, branch)
 
+    def get_build_ctime(build):
+        return os.path.getctime(os.path.join(branch_path, build))
+
     try:
         builds = os.listdir(branch_path)
-        builds.sort()
+        builds.sort(key=get_build_ctime)
         if not latest:
             print "Pick a build"
             count = 0
