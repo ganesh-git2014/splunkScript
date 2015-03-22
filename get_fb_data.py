@@ -3,11 +3,9 @@ from datetime import datetime
 from optparse import OptionParser
 import platform
 import json
+import csv
 import os
 
-
-uris = [u"/tsaiingwen",
-        u"/pages/%E5%AE%8B%E6%A5%9A%E7%91%9C/781585891901624"]
 
 def get_post_attribute(post):
     '''
@@ -34,17 +32,17 @@ def get_post_attribute(post):
     ret['content'] = post.find_element_by_class_name("userContent").text
     return ret
 
-def get_fb_user_posts(browser, uri, file_name):
+def get_fb_user_posts(browser, row, file_name):
     '''
     Get user's posts and write them to a json file
 
     @param browser: Browser to get the posts
     @type browser: WebDriver
 
-    @param uri: uri after "https://www.facebook.com"
-    @type uri: string
+    @param row: a dictionary of a row of the input file
+    @type uri: dictionary
     '''
-    browser.get("https://www.facebook.com" + uri)
+    browser.get("https://www.facebook.com" + row['uri'])
     # scroll to bottom for 3 times to get more posts
     for i in range(3):
         browser.execute_script(
@@ -61,11 +59,12 @@ def get_fb_user_posts(browser, uri, file_name):
     with open(file_name, "a") as output:
         for post in posts:
             attributes = get_post_attribute(post)
-            attributes['name'] = name
-            attributes['category'] = category
-            attributes['date_time'] = post.get_attribute("data-time")
+            attributes['fb_name'] = name
+            attributes['fb_category'] = category
+            attributes['fb_time'] = post.get_attribute("data-time")
             attributes['get_time'] = datetime.now().strftime(
                 "%d/%m/%Y %H:%M:%S")
+            attributes.update(row)
             json.dump(attributes, output)
 
 def parse_options():
@@ -75,7 +74,10 @@ def parse_options():
     parser = OptionParser()
     parser.add_option(
         "-o", "--output", dest="output", help="file to write output",
-        default=os.path.join(os.path.expanduser("~/"), "fb.json"))
+        default="fb.json")
+    parser.add_option(
+        "-i", "--input", dest="input", help="csv file get fb users",
+        default="fb_input.csv")
     (options, args) = parser.parse_args()
     return options
 
@@ -84,12 +86,12 @@ def main():
     browser = FireFox()
     try:
         options = parse_options()
-        for uri in uris:
-            get_fb_user_posts(browser, uri, options.output)
-
+        with open(options.input, "r") as csv_file:
+            reader = csv.DictReader(csv_file)
+            for row in reader:
+                get_fb_user_posts(browser, row, options.output)
     except Exception, e:
         print e
-        exit(1)
     finally:
         browser.close()
 
