@@ -1,7 +1,10 @@
 from selenium.webdriver.firefox.webdriver import WebDriver as FireFox
+from datetime import datetime
+from optparse import OptionParser
 import platform
 import json
-from datetime import datetime
+import os
+
 
 uris = [u"/tsaiingwen",
         u"/pages/%E5%AE%8B%E6%A5%9A%E7%91%9C/781585891901624"]
@@ -31,7 +34,7 @@ def get_post_attribute(post):
     ret['content'] = post.find_element_by_class_name("userContent").text
     return ret
 
-def get_fb_user_posts(browser, uri):
+def get_fb_user_posts(browser, uri, file_name):
     '''
     Get user's posts and write them to a json file
 
@@ -55,7 +58,7 @@ def get_fb_user_posts(browser, uri):
     posts = browser.find_elements_by_css_selector(
         "._4-u2.mbm._5jmm._5pat._5v3q")
 
-    with open("fb.json", "a") as output:
+    with open(file_name, "a") as output:
         for post in posts:
             attributes = get_post_attribute(post)
             attributes['name'] = name
@@ -65,12 +68,24 @@ def get_fb_user_posts(browser, uri):
                 "%d/%m/%Y %H:%M:%S")
             json.dump(attributes, output)
 
+def parse_options():
+    """
+    parse options
+    """
+    parser = OptionParser()
+    parser.add_option(
+        "-o", "--output", dest="output", help="file to write output",
+        default=os.path.join(os.path.expanduser("~/"), "fb.json"))
+    (options, args) = parser.parse_args()
+    return options
+
 def main():
     # start browser
+    browser = FireFox()
     try:
-        browser = FireFox()
+        options = parse_options()
         for uri in uris:
-            get_fb_user_posts(browser, uri)
+            get_fb_user_posts(browser, uri, options.output)
 
     except Exception, e:
         print e
