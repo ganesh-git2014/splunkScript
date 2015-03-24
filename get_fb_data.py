@@ -55,6 +55,7 @@ def get_fb_user_posts(browser, row, file_name):
         "._58gj.fsxxl.fwn.fcw").text
     posts = browser.find_elements_by_css_selector(
         "._4-u2.mbm._5jmm._5pat._5v3q")
+    posts.reverse()
 
     with open(file_name, "a") as output:
         for post in posts:
@@ -66,6 +67,7 @@ def get_fb_user_posts(browser, row, file_name):
                 "%d/%m/%Y %H:%M:%S")
             attributes.update(row)
             json.dump(attributes, output)
+            output.write("\n")
 
 def parse_options():
     """
