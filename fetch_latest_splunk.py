@@ -124,6 +124,8 @@ def parse_options():
     parser.add_option("-f", "--from", dest="host",
                       help="whre you want to fetch from: TW or SF",
                       default='TW')
+    parser.add_option("-l", "--splunklight", help="set this to get splunklight",
+                      action="store_true", dest="light")
     (options, args) = parser.parse_args()
     return options
 
@@ -135,6 +137,7 @@ def main():
     splunk_dir = options.splunk_dir
     url = options.url
     host = options.host
+    light = options.light
 
     # check if pkg_dir and splunk_dir exist. if not, create them
     if not os.path.exists(pkg_dir):
@@ -159,6 +162,12 @@ def main():
             url_template = url_template + "&P4CHANGE={c}".format(c=cl)
         else:
             print "Getting the latest splunk pkg on branch '{b}'".format(b=branch)
+
+        if light is not None:
+            print "Getting splunk light"
+            url_template = url_template + "&PRODUCT=splunklight"
+        else:
+            print "Getting splunk"
 
         # get url of latest package
         for p in get_package_names():
